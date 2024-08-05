@@ -9,7 +9,13 @@ Lua dili için Türk Dil Kurumu API modülü.
     - [Genel (global) kurulum](#genel-global-kurulum)
     - [Yerel (local) kurulum](#yerel-local-kurulum)
   - [Kullanımı](#kullanımı)
+    - [`ara` fonskiyonu](#ara-fonskiyonu)
+      - [kullanımı](#kullanımı-1)
+    - [`json` modülünü içe aktarmayı engellemek](#json-modülünü-içe-aktarmayı-engellemek)
+      - [Örnek:](#örnek)
     - [Sözlük (`tdk.sozluk.X`) değerleri](#sözlük-tdksozlukx-değerleri)
+    - [`tdk.versiyon`](#tdkversiyon)
+      - [Örnek kullanım:](#örnek-kullanım)
   - [Kullanılan Sözlük ve Klavuzlar](#kullanılan-sözlük-ve-klavuzlar)
     - [Genel Sözlükler](#genel-sözlükler)
     - [Lisans: GPLv3](#lisans-gplv3)
@@ -49,12 +55,43 @@ wget https://raw.githubusercontent.com/rxi/json.lua/master/json.lua https://raw.
 local tdk = require("tdk")
 
 local query, error = tdk.ara("küplere binmek", tdk.sozluk.atasozleri_deyimler_sozlugu)
+local query2, _ = tdk.ara("küplere binmek", tdk.sozluk.atasozleri_deyimler_sozlugu, false)
 
 if error then -- eğer hata var ise
     print(error) -- örnek: > Sonuç bulunamadı
 else
     print(query) --> table: 0x012345678912
+    print(query2) --> [{"soz_id":"9024","sozum":"küplere binmek", ... "gosterim_tarihi":null}]
 end
+```
+
+### `ara` fonskiyonu
+
+`ara` fonksiyonu tdk api'ına arama isteği yollar ve çıktıyı istenen türde döndürür.
+
+#### kullanımı
+
+```lua
+local sorgu, hata = tdk.ara(
+  1. girdi: aranacak söz yada kelime,
+  2. sözlük(opsiyonel): girdinin aranacağı tdk sözlüğü yada klavuzu. varsayılan: tdk.sozluk.gts,
+  3. encode_json(opsiyonel)(true/false): çıktının table türüne çevrilip çevrilmeyeceği. varsayılan: true(çevir),
+)
+
+-- daha basit hali ile "tdk.ara(girdi, sözlük, true/false)"
+
+-- eğer hata değerini kullanmayacaksanız hata yerine _ (alt çizgi) karakterini kullanın.
+```
+
+### `json` modülünü içe aktarmayı engellemek
+
+Kod içerisinde `tdk` modülünü içe aktarmadan önce `tdk_load_json = false` satırını ekleyerek tdk modülünün, `json` modülünü kullanmasına engel olabilirsiniz. Bunun sonucunda eğer `ara` fonskiyonunun 3. argümanına `false` değeri girmeseniz bile çıktıyı `string` türünde döndürür.
+
+#### Örnek:
+```lua
+tdk_load_json = false
+
+local tdk = require("tdk")
 ```
 
 ### Sözlük (`tdk.sozluk.X`) değerleri
@@ -66,6 +103,17 @@ end
 - `bilim_sanat_terimleri_sozlugu / bst`: Bilim ve Sanat Terimleri Sözlükleri ve Kılavuzları
 - `yabanci_sozlerin_karsiligi_sozlugu / ysk`: Yabancı Sözlere Karşılıklar Kılavuzu
 - `eren_turk_dilinin_etimolojik_sozlugu / etms`: Eren Türk Dilinin Etimolojik Sözlüğü
+
+### `tdk.versiyon`
+
+Modülün sürümünü belirtir.
+
+#### Örnek kullanım:
+```lua
+local tdk = require("tdk")
+
+print(tdk.versiyon) --> X.X.X
+```
 
 ## Kullanılan Sözlük ve Klavuzlar
 

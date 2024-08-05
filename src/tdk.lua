@@ -33,6 +33,7 @@
 --  "ara" fonksiyonunun argümanları:
 --    query(zorunlu) : aranacak girdi, kelime, söz.
 --    dictionary(opsiyonel) : kelime girdisinin aranacağı sözlük. Varsayılan: tdk.sozluk.guncel_turkce_sozluk
+--    return_table(opsiyonel)(true/false): çıktının table verisi olarak döndürülüp döndürulmeyeceğini belirtir. varsayılan: true
 --
 --   ───┬─── fonksiyonun kullanımı ────
 --    1 │ local tdk = require("tdk")
@@ -47,11 +48,24 @@
 
 
 
+
+--- Modül seçenekleri ---
+
+tdk_load_json = (tdk_load_json == true or tdk_load_json == nil) and true -- json.lua ile veri çekmek için gerekli olan json modülünün yüklenmesinin istenip istenmediğini belirtir. Varsayılan olarak modül yüklenir.
+
+--- Modül seçenekleri ---
+
+
+
 --- İçe aktarımlar ---
 
 local http = require("socket.http") -- TDK apisi üzerinden veri çekmek için
 local url = require("socket.url") -- Aranacak girdiyi uri formatında kodlamak için
-local json = require("json") -- Çekilen veriyi table tipine çevirmek için
+local json = nil -- Çekilen veriyi table tipine çevirmek için gerekli json modülünün değişkeni
+
+if tdk_load_json then -- Eğer json modülünün yükelnmesi isteniyorsa
+    json = require("json") -- json modülünü yükle
+end
 
 --- İçe aktarımlar ---
 
@@ -61,7 +75,7 @@ local json = require("json") -- Çekilen veriyi table tipine çevirmek için
 
 local M = {}
 
-M.version = "1.0.0"
+M.versiyon = "1.1.0"
 
 local sozluk = {
     -- Güncel Türkçe Sözlük
@@ -130,13 +144,19 @@ end
 -- Arama fonksiyonu tdk.ara(query, dictionary = tdk.sozluk.gts)
 --   query: aranacak kelime,
 --   dictionary(opsiyonel): sozluk id'si (varsayılan tdk.sozluk.gts)
-function M.ara(query, dictionary)
+--   return_table(opsiyonel)(true/false): çıktının table verisi olarak döndürülüp döndürulmeyeceğini belirtir. varsayılan: true
+function M.ara(query, dictionary, return_table)
 
     dictionary = dictionary or sozluk.guncel_turkce_sozluk -- varsayılan: Güncel Türkçe Sözlük
+    return_table = (return_table == true or return_table == nil) and true -- çıktının table verisi olarak döndürülüp döndürulmeyeceğini belirtir. varsayılan: true
 
     local req_url = "https://sozluk.gov.tr/" .. dictionary .. "ara=" .. url.escape(query) -- aranacak girdiyi uri formatına kodlayıp sözlük ile bir api bağlantı link oluştur
     local req = request(req_url) -- bağlantı linkine veri isteği yolla
-    local result = json.decode(req.body) -- verileri json formatına dönustur
+    local result = req.body -- çıktıyı bir değişkene ata
+
+    if tdk_load_json and return_table then -- eğer json modülü yüklendi ise yada çıktı table formatında isteniyor ise
+        result = json.decode(result) -- çıktıyı table formatına dönüştür
+    end
 
     if result["error"] then
         return result, result["error"]
